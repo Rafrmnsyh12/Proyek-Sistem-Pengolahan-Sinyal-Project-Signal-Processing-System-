@@ -1,0 +1,13 @@
+[server]
+host = "0.0.0.0"
+port = 3000
+arduino_port = 8081
+
+[influxdb]
+url = "http://localhost:8086"
+org = "ITS"
+bucket = "E-Nouse"
+token = "LkGB-pNDB49pN3y2SroVaMn1BM7J_ht91-1xA4BRAOTosvujC4aA0ZMNMWXPpxMPlud9Dkyb9psLOkXNsgDVMw=="
+
+[edge_impulse]
+api_key = "ei_22521a805fc50af48c92c34c52aadac76507b2728ee7a0e2"

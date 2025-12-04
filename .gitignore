@@ -1,0 +1,21 @@
+# === Rust backend build artifacts ===
+backend/target/
+backend/target_temp/
+**/*.rlib
+**/*.pdb
+
+# === Python ===
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.venv/
+venv/
+
+# === VSCode / IDE ===
+.vscode/
+.idea/
+
+# === Misc ===
+*.log
+*.tmp
