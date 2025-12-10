@@ -7,9 +7,9 @@
 #include "Multichannel_Gas_GMXXX.h"
 
 // ==================== WIFI CONFIG ====================
-const char* ssid = "Start-up_5G";
-const char* pass = "Warkop123";
-const char* RUST_IP = "192.168.1.135";  // IP PC Anda (Fixed)
+const char* ssid = "HUPOMONE";
+const char* pass = "beranak7";  
+const char* RUST_IP = "192.168.100.173";  // IP PC Anda (Fixed)
 const int   RUST_PORT = 8081;           // Port Backend (Fixed)
 WiFiClient client;
 
@@ -31,11 +31,11 @@ const int speeds[5] = {51, 102, 153, 204, 255};
 bool samplingActive = false;
 
 // ==================== TIMING (ms) ====================
-const unsigned long T_PRECOND  = 10000;
+const unsigned long T_PRECOND  = 5000;
 const unsigned long T_RAMP     = 2000;
-const unsigned long T_HOLD     = 120000;
-const unsigned long T_PURGE    = 240000;
-const unsigned long T_RECOVERY = 10000;
+const unsigned long T_HOLD     = 40000;
+const unsigned long T_PURGE    = 60000;
+const unsigned long T_RECOVERY = 5000;
 unsigned long lastSend = 0;
 
 // ==================== MOTOR FUNCTIONS ====================
@@ -239,8 +239,8 @@ void sendSensorData() {
   if (client.connect(RUST_IP, RUST_PORT)) {
     client.println(json);
     client.stop();
-    // Serial.println("Data Sent!"); // Uncomment jika ingin spam serial
+    Serial.println("Data Sent!"); // Uncomment jika ingin spam serial
   } else {
-    // Serial.println("Backend Connect Failed!"); 
+    Serial.println("Backend Connect Failed!"); 
   }
 }

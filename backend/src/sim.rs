@@ -7,7 +7,7 @@ pub struct SignalParams {
     pub frequency: f64,
     pub phase: f64, // in degrees
 }
-//test
+
 impl Default for SignalParams {
     fn default() -> Self {
         Self {

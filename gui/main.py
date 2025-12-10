@@ -184,6 +184,12 @@ class ENouseTab(QWidget):
         btn_influx = QPushButton("🗄️ Connect InfluxDB")
         btn_influx.clicked.connect(self.connect_influx)
         file_layout.addWidget(btn_influx)
+
+        btn_gnuplot = QPushButton("💾 Save GNUplot")
+        btn_gnuplot.clicked.connect(self.save_gnuplot)
+        btn_gnuplot.setStyleSheet("background: #FF9800; color: black;")
+        file_layout.addWidget(btn_gnuplot)
+
         file_layout.addStretch()
         self.layout.addLayout(file_layout)
 
@@ -199,9 +205,6 @@ class ENouseTab(QWidget):
         QTimer.singleShot(1000, self.refresh_ports)
 
     # ... (Keep all methods: refresh_ports, connect_serial, start_sampling, etc.)
-    # I will copy them in the next step or assume they are moved. 
-    # Actually, I need to include them here or the code will break.
-    # Since I am replacing the MainWindow class, I must provide the full implementation of ENouseTab.
     
     def refresh_ports(self):
         try:
@@ -230,6 +233,7 @@ class ENouseTab(QWidget):
             requests.post(f"{API_URL}/start", json={"label": label})
             self.timestamps = []
             for k in self.data_buffer: self.data_buffer[k] = []
+            for curve in self.curves.values(): curve.setData([], [])
         except Exception as e:
             QMessageBox.critical(self, "Error", str(e))
 
@@ -347,6 +351,66 @@ class ENouseTab(QWidget):
 
         except Exception as e:
             QMessageBox.critical(self, "Error", str(e))
+
+    def save_gnuplot(self):
+        if not self.timestamps:
+            QMessageBox.warning(self, "Warning", "No data to save!")
+            return
+
+        path, _ = QFileDialog.getSaveFileName(self, "Save GNUplot Data", "", "Data Files (*.dat)")
+        if not path: return
+
+        try:
+            import os
+            base_name = os.path.splitext(path)[0]
+            dat_file = f"{base_name}.dat"
+            gp_file = f"{base_name}.gp"
+            
+            # 1. Save Data to .dat file
+            with open(dat_file, 'w', encoding='utf-8') as f:
+                # Header
+                headers = ["Time"] + [c[2] for c in self.channels] # Use short labels
+                f.write("# " + " ".join(headers).replace(" ", "_") + "\n")
+                
+                # Data
+                # Ensure all buffers have same length as timestamps
+                min_len = len(self.timestamps)
+                for k in self.data_buffer:
+                    min_len = min(min_len, len(self.data_buffer[k]))
+                
+                for i in range(min_len):
+                    row = [f"{self.timestamps[i]:.4f}"]
+                    for k, _, _, _ in self.channels:
+                        val = self.data_buffer[k][i] if i < len(self.data_buffer[k]) else 0
+                        row.append(f"{val:.4f}")
+                    f.write(" ".join(row) + "\n")
+            
+            # 2. Create GNUplot Script .gp
+            with open(gp_file, 'w', encoding='utf-8') as f:
+                plot_cmds = []
+                for i, (_, _, label, color) in enumerate(self.channels):
+                    # Column 1 is Time, so data starts at Column 2
+                    col_idx = i + 2
+                    plot_cmds.append(f'"{os.path.basename(dat_file)}" using 1:{col_idx} with lines title "{label}" lc rgb "{color}" lw 2')
+                
+                plot_cmd_str = ", \\\n     ".join(plot_cmds)
+
+                f.write(f"""
+set title "E-Nouse Data: {os.path.basename(base_name)}"
+set xlabel "Time (s)"
+set ylabel "Sensor Value"
+set grid
+set key outside
+set term wxt size 1000,600 persist
+plot {plot_cmd_str}
+pause mouse close
+""")
+            
+            QMessageBox.information(self, "Success", f"Saved:\n{dat_file}\n{gp_file}\n\nYou can run it with: gnuplot {os.path.basename(gp_file)}")
+            
+        except Exception as e:
+            QMessageBox.critical(self, "Error", f"Failed to save GNUplot files: {str(e)}")
+
 
     @Slot(dict)
     def update_graph(self, data):
@@ -477,6 +541,7 @@ class SimulationTab(QWidget):
         btn_save_json = QPushButton("💾 Save JSON")
         btn_save_json.clicked.connect(self.save_json)
         save_layout.addWidget(btn_save_json)
+        
         self.layout.addLayout(save_layout)
 
         # --- Plots ---
@@ -575,6 +640,7 @@ class SimulationTab(QWidget):
             QMessageBox.information(self, "Success", f"Saved {len(self.times)} points to JSON")
         except Exception as e:
             QMessageBox.critical(self, "Error", str(e))
+
 
     @Slot(dict)
     def update_graph(self, data):
